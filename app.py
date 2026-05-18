@@ -4,11 +4,31 @@ from modules.cv_parser import extract_text_from_pdf
 from modules.ai_questions import analyze_cv, generate_interview_questions
 from modules.emotion_detector import detect_emotion
 from modules.evaluator import evaluate_answer
-from modules.database import init_db, save_interview, get_all_interviews, get_average_scores
+from modules.database import init_db, save_interview, get_all_interviews, get_average_scores, register_user, login_user
 from modules.charts import create_score_radar_chart, create_emotion_pie_chart, create_score_bar_chart
 
 # Initialize database
 init_db()
+# Session state
+if 'cv_text' not in st.session_state:
+    st.session_state.cv_text = ""
+if 'cv_analysis' not in st.session_state:
+    st.session_state.cv_analysis = ""
+if 'questions' not in st.session_state:
+    st.session_state.questions = ""
+if 'emotions' not in st.session_state:
+    st.session_state.emotions = []
+if 'scores' not in st.session_state:
+    st.session_state.scores = {}
+if 'candidate_name' not in st.session_state:
+    st.session_state.candidate_name = ""
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+if 'current_user' not in st.session_state:
+    st.session_state.current_user = None
+if 'show_signup' not in st.session_state:
+    st.session_state.show_signup = False
+
 
 # Page config
 st.set_page_config(
@@ -218,25 +238,154 @@ st.markdown("""
 # Sidebar navigation
 st.sidebar.title("🤖 AI Interview System")
 st.sidebar.markdown("---")
-page = st.sidebar.radio(
-    "Navigation",
-    ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History", "🏆 Competition"]
-)
 
-# Session state
-if 'cv_text' not in st.session_state:
-    st.session_state.cv_text = ""
-if 'cv_analysis' not in st.session_state:
-    st.session_state.cv_analysis = ""
-if 'questions' not in st.session_state:
-    st.session_state.questions = ""
-if 'emotions' not in st.session_state:
-    st.session_state.emotions = []
-if 'scores' not in st.session_state:
-    st.session_state.scores = {}
-if 'candidate_name' not in st.session_state:
-    st.session_state.candidate_name = ""
+if st.session_state.logged_in:
+    st.sidebar.markdown(f"👤 **{st.session_state.current_user['full_name']}**")
+    st.sidebar.markdown(f"📧 {st.session_state.current_user['email']}")
+    st.sidebar.markdown("---")
+    
+    page = st.sidebar.radio(
+        "Navigation",
+        ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History", "🏆 Competition"]
+    )
+    
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🚪 Logout"):
+        st.session_state.logged_in = False
+        st.session_state.current_user = None
+        st.session_state.cv_text = ""
+        st.session_state.cv_analysis = ""
+        st.session_state.questions = ""
+        st.session_state.emotions = []
+        st.session_state.scores = {}
+        st.rerun()
+else:
+    page = "🔐 Login"
 
+
+# ============================================================
+# PAGE 0 — LOGIN/SIGNUP
+# ============================================================
+if page == "🔐 Login":
+    st.markdown("""
+    <div class='header-banner'>
+        <h1>🤖 AI Interview & Communication Analysis Platform</h1>
+        <p>Powered by Google Gemini AI — Sign in to continue</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    if not st.session_state.show_signup:
+        # LOGIN FORM
+        st.markdown("### 🔐 Login to Your Account")
+        
+        col1, col2, col3 = st.columns([1,2,1])
+        
+        with col2:
+            st.markdown("""
+            <div class='score-card'>
+                <h2>👤</h2>
+                <h3>Welcome Back!</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("")
+            email = st.text_input(
+                "📧 Email Address",
+                placeholder="Enter your email..."
+            )
+            password = st.text_input(
+                "🔑 Password",
+                type="password",
+                placeholder="Enter your password..."
+            )
+            
+            st.markdown("")
+            
+            if st.button("🚀 Login"):
+                if email and password:
+                    success, result = login_user(email, password)
+                    if success:
+                        st.session_state.logged_in = True
+                        st.session_state.current_user = result
+                        st.success(f"✅ Welcome back {result['full_name']}!")
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {result}")
+                else:
+                    st.warning("⚠️ Please enter email and password!")
+            
+            st.markdown("")
+            st.markdown("Don't have an account?")
+            
+            if st.button("📝 Create New Account"):
+                st.session_state.show_signup = True
+                st.rerun()
+    
+    else:
+        # SIGNUP FORM
+        st.markdown("### 📝 Create New Account")
+        
+        col1, col2, col3 = st.columns([1,2,1])
+        
+        with col2:
+            st.markdown("""
+            <div class='score-card'>
+                <h2>🎉</h2>
+                <h3>Join Us Today!</h3>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("")
+            
+            full_name = st.text_input(
+                "👤 Full Name",
+                placeholder="Enter your full name..."
+            )
+            email = st.text_input(
+                "📧 Email Address",
+                placeholder="Enter your email..."
+            )
+            password = st.text_input(
+                "🔑 Password",
+                type="password",
+                placeholder="Create a password..."
+            )
+            confirm_password = st.text_input(
+                "🔑 Confirm Password",
+                type="password",
+                placeholder="Confirm your password..."
+            )
+            
+            st.markdown("")
+            
+            if st.button("🎉 Create Account"):
+                if full_name and email and password and confirm_password:
+                    if password == confirm_password:
+                        if len(password) >= 6:
+                            success, message = register_user(
+                                full_name, email, password
+                            )
+                            if success:
+                                st.success(f"✅ {message} Please login!")
+                                st.session_state.show_signup = False
+                                st.rerun()
+                            else:
+                                st.error(f"❌ {message}")
+                        else:
+                            st.warning("⚠️ Password must be at least 6 characters!")
+                    else:
+                        st.error("❌ Passwords don't match!")
+                else:
+                    st.warning("⚠️ Please fill in all fields!")
+            
+            st.markdown("")
+            st.markdown("Already have an account?")
+            
+            if st.button("🔐 Back to Login"):
+                st.session_state.show_signup = False
+                st.rerun()
 # ============================================================
 # PAGE 1 — HOME
 # ============================================================
