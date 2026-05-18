@@ -245,9 +245,9 @@ if st.session_state.logged_in:
     st.sidebar.markdown("---")
     
     page = st.sidebar.radio(
-        "Navigation",
-        ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History", "🏆 Competition"]
-    )
+    "Navigation",
+    ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History", "🏆 Competition", "💼 Job Matcher"]
+)
     
     st.sidebar.markdown("---")
     if st.sidebar.button("🚪 Logout"):
@@ -1084,3 +1084,233 @@ elif page == "🏆 Competition":
                     
             else:
                 st.error("⚠️ Both candidates must answer before judging!")
+                # ============================================================
+# PAGE 7 — JOB MATCHER
+# ============================================================
+elif page == "💼 Job Matcher":
+    st.title("💼 AI Job Role Matcher")
+    st.markdown("---")
+    
+    st.markdown("""
+    <div class='header-banner'>
+        <h1>💼 Find Your Perfect Career Match</h1>
+        <p>Upload your CV and AI will tell you which jobs you're best suited for!</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # CV Upload
+    st.markdown("### 📄 Step 1 — Upload Your CV")
+    uploaded_file = st.file_uploader(
+        "Upload CV (PDF)",
+        type=["pdf"],
+        key="job_matcher_cv"
+    )
+    
+    if uploaded_file is not None:
+        st.success("✅ CV Uploaded Successfully!")
+        
+        cv_text = extract_text_from_pdf(uploaded_file)
+        
+        st.markdown("### 🎯 Step 2 — Choose Your Field")
+        field = st.selectbox(
+            "Select your field",
+            [
+                "Software Engineering",
+                "Data Science & AI",
+                "Cybersecurity",
+                "Web Development",
+                "Mobile Development",
+                "Cloud Computing",
+                "DevOps",
+                "Network Engineering",
+                "Database Administration",
+                "UI/UX Design"
+            ]
+        )
+        
+        if st.button("🚀 Find My Job Matches!"):
+            with st.spinner("AI is analyzing your CV and finding best matches..."):
+                from google import genai
+                client = genai.Client(api_key="AIzaSyDlMmHZCCuNls9WC71K6IJFsxixHBQ_jFg")
+                
+                prompt = f"""
+                You are an expert career counselor and HR specialist.
+                
+                Analyze this CV and find the best job matches in the {field} field.
+                
+                CV:
+                {cv_text}
+                
+                Respond EXACTLY in this format:
+                
+                JOB1_TITLE: [job title]
+                JOB1_MATCH: [match percentage 0-100]
+                JOB1_REASON: [one sentence why they match]
+                JOB1_SKILLS_HAVE: [skills they already have for this job]
+                JOB1_SKILLS_NEED: [skills they need to learn]
+                
+                JOB2_TITLE: [job title]
+                JOB2_MATCH: [match percentage 0-100]
+                JOB2_REASON: [one sentence why they match]
+                JOB2_SKILLS_HAVE: [skills they already have for this job]
+                JOB2_SKILLS_NEED: [skills they need to learn]
+                
+                JOB3_TITLE: [job title]
+                JOB3_MATCH: [match percentage 0-100]
+                JOB3_REASON: [one sentence why they match]
+                JOB3_SKILLS_HAVE: [skills they already have for this job]
+                JOB3_SKILLS_NEED: [skills they need to learn]
+                
+                JOB4_TITLE: [job title]
+                JOB4_MATCH: [match percentage 0-100]
+                JOB4_REASON: [one sentence why they match]
+                JOB4_SKILLS_HAVE: [skills they already have for this job]
+                JOB4_SKILLS_NEED: [skills they need to learn]
+                
+                JOB5_TITLE: [job title]
+                JOB5_MATCH: [match percentage 0-100]
+                JOB5_REASON: [one sentence why they match]
+                JOB5_SKILLS_HAVE: [skills they already have for this job]
+                JOB5_SKILLS_NEED: [skills they need to learn]
+                
+                OVERALL_RECOMMENDATION: [2 sentences overall career advice]
+                STRONGEST_SKILLS: [list 3 strongest skills from CV]
+                IMPROVEMENT_AREAS: [list 3 areas to improve]
+                """
+                
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
+                
+                result = response.text
+                
+                # Parse results
+                jobs = []
+                for i in range(1, 6):
+                    job = {}
+                    for line in result.split('\n'):
+                        if f'JOB{i}_TITLE:' in line:
+                            job['title'] = line.replace(f'JOB{i}_TITLE:', '').strip()
+                        if f'JOB{i}_MATCH:' in line:
+                            try:
+                                job['match'] = float(line.replace(f'JOB{i}_MATCH:', '').strip().replace('%', ''))
+                            except:
+                                job['match'] = 70
+                        if f'JOB{i}_REASON:' in line:
+                            job['reason'] = line.replace(f'JOB{i}_REASON:', '').strip()
+                        if f'JOB{i}_SKILLS_HAVE:' in line:
+                            job['skills_have'] = line.replace(f'JOB{i}_SKILLS_HAVE:', '').strip()
+                        if f'JOB{i}_SKILLS_NEED:' in line:
+                            job['skills_need'] = line.replace(f'JOB{i}_SKILLS_NEED:', '').strip()
+                    if job:
+                        jobs.append(job)
+                
+                # Parse overall
+                overall_rec = ""
+                strongest = ""
+                improvement = ""
+                
+                for line in result.split('\n'):
+                    if 'OVERALL_RECOMMENDATION:' in line:
+                        overall_rec = line.replace('OVERALL_RECOMMENDATION:', '').strip()
+                    if 'STRONGEST_SKILLS:' in line:
+                        strongest = line.replace('STRONGEST_SKILLS:', '').strip()
+                    if 'IMPROVEMENT_AREAS:' in line:
+                        improvement = line.replace('IMPROVEMENT_AREAS:', '').strip()
+                
+                # Show results
+                st.markdown("---")
+                st.markdown("## 🎯 Your Job Match Results")
+                
+                # Job cards
+                for i, job in enumerate(jobs):
+                    if 'title' in job and 'match' in job:
+                        match = job['match']
+                        
+                        # Color based on match
+                        if match >= 80:
+                            color = "#FFB300"
+                            emoji = "🔥"
+                        elif match >= 60:
+                            color = "#51CF66"
+                            emoji = "✅"
+                        else:
+                            color = "#8B9DC3"
+                            emoji = "📈"
+                        
+                        st.markdown(f"""
+                        <div class='score-card'>
+                            <h2>{emoji}</h2>
+                            <h3>{job.get('title', 'Job Role')}</h3>
+                            <div class='big-score' style='color: {color}'>{match}%</div>
+                            <p>Match Score</p>
+                            <p>💡 {job.get('reason', '')}</p>
+                            <p>✅ <strong>Have:</strong> {job.get('skills_have', '')}</p>
+                            <p>📚 <strong>Need:</strong> {job.get('skills_need', '')}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        st.markdown("")
+                
+                # Chart
+                if jobs:
+                    import plotly.graph_objects as go
+                    
+                    titles = [j.get('title', f'Job {i+1}') for i, j in enumerate(jobs)]
+                    matches = [j.get('match', 70) for j in jobs]
+                    colors = ['#FFB300' if m >= 80 else '#51CF66' if m >= 60 else '#8B9DC3' for m in matches]
+                    
+                    fig = go.Figure(data=[
+                        go.Bar(
+                            x=matches,
+                            y=titles,
+                            orientation='h',
+                            marker_color=colors,
+                            text=[f'{m}%' for m in matches],
+                            textposition='auto'
+                        )
+                    ])
+                    
+                    fig.update_layout(
+                        title="Job Match Comparison",
+                        xaxis=dict(range=[0, 100]),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='white')
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                
+                # Overall recommendation
+                st.markdown("---")
+                st.markdown("### 💡 AI Career Advice")
+                
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.markdown(f"""
+                    <div class='score-card'>
+                        <h2>🎯</h2>
+                        <h3>Recommendation</h3>
+                        <p>{overall_rec}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col2:
+                    st.markdown(f"""
+                    <div class='score-card'>
+                        <h2>💪</h2>
+                        <h3>Strongest Skills</h3>
+                        <p>{strongest}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                with col3:
+                    st.markdown(f"""
+                    <div class='score-card'>
+                        <h2>📚</h2>
+                        <h3>Improve These</h3>
+                        <p>{improvement}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
