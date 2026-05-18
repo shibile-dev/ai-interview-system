@@ -1,7 +1,7 @@
 from google import genai
 
 client = genai.Client(
-    api_key="api_key="YOUR_API_KEY_HERE""
+    api_key="AIzaSyDlMmHZCCuNls9WC71K6IJFsxixHBQ_jFg"
 )
 
 def detect_emotion(answer_text=""):

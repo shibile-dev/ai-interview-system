@@ -220,7 +220,7 @@ st.sidebar.title("🤖 AI Interview System")
 st.sidebar.markdown("---")
 page = st.sidebar.radio(
     "Navigation",
-    ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History"]
+    ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History", "🏆 Competition"]
 )
 
 # Session state
@@ -663,3 +663,275 @@ elif page == "📋 History":
                     st.write(f"**Confidence:** {interview[7]}/10")
                     st.write(f"**Overall:** {interview[8]}/10")
                     st.write(f"**Emotion:** {interview[9]}")
+                    # ============================================================
+# PAGE 6 — COMPETITION
+# ============================================================
+elif page == "🏆 Competition":
+    st.title("🏆 AI Interview Competition Mode")
+    st.markdown("---")
+    
+    st.markdown("""
+    <div class='header-banner'>
+        <h1>⚔️ Head to Head Interview Battle</h1>
+        <p>Two candidates. Same questions. One winner. Let AI decide!</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Step 1 - Enter candidate names
+    st.markdown("### 👥 Step 1 — Enter Candidates")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        <div class='score-card'>
+            <h2>🔵</h2>
+            <h3>Candidate 1</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        candidate1_name = st.text_input(
+            "Candidate 1 Name",
+            placeholder="Enter first candidate name..."
+        )
+    
+    with col2:
+        st.markdown("""
+        <div class='score-card'>
+            <h2>🔴</h2>
+            <h3>Candidate 2</h3>
+        </div>
+        """, unsafe_allow_html=True)
+        candidate2_name = st.text_input(
+            "Candidate 2 Name",
+            placeholder="Enter second candidate name..."
+        )
+    
+    st.markdown("---")
+    
+    # Step 2 - Enter interview topic
+    st.markdown("### 🎯 Step 2 — Enter Interview Topic")
+    topic = st.text_input(
+        "Interview Topic",
+        placeholder="e.g. Python Programming, Cloud Security, Machine Learning..."
+    )
+    
+    # Generate questions button
+    if st.button("⚡ Generate Competition Questions"):
+        if topic:
+            with st.spinner("Generating competition questions..."):
+                from google import genai
+                client = genai.Client(api_key="AIzaSyDlMmHZCCuNls9WC71K6IJFsxixHBQ_jFg")
+                
+                prompt = f"""
+                Generate 3 challenging interview questions about: {topic}
+                
+                Make them:
+                - Technical and specific
+                - Suitable for university level
+                - Progressively harder
+                
+                Format EXACTLY like this:
+                Q1: [question]
+                Q2: [question]
+                Q3: [question]
+                """
+                
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
+                
+                st.session_state.competition_questions = response.text
+                st.success("✅ Questions Generated!")
+        else:
+            st.warning("⚠️ Please enter an interview topic first!")
+    
+    # Show questions if generated
+    if 'competition_questions' in st.session_state and st.session_state.competition_questions:
+        st.markdown("### ❓ Competition Questions")
+        st.info(st.session_state.competition_questions)
+        
+        st.markdown("---")
+        
+        # Step 3 - Candidates answer
+        st.markdown("### 🎤 Step 3 — Candidates Answer")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown(f"#### 🔵 {candidate1_name or 'Candidate 1'}")
+            answer1 = st.text_area(
+                "Answer (Candidate 1)",
+                placeholder="Type answer here...",
+                height=200,
+                key="answer1"
+            )
+        
+        with col2:
+            st.markdown(f"#### 🔴 {candidate2_name or 'Candidate 2'}")
+            answer2 = st.text_area(
+                "Answer (Candidate 2)",
+                placeholder="Type answer here...",
+                height=200,
+                key="answer2"
+            )
+        
+        st.markdown("---")
+        
+        # Step 4 - Judge
+        if st.button("⚖️ JUDGE THE COMPETITION!"):
+            if answer1 and answer2:
+                with st.spinner("AI is judging both candidates..."):
+                    from google import genai
+                    client = genai.Client(api_key="AIzaSyDlMmHZCCuNls9WC71K6IJFsxixHBQ_jFg")
+                    
+                    prompt = f"""
+                    You are an expert interview judge.
+                    
+                    Questions asked:
+                    {st.session_state.competition_questions}
+                    
+                    Candidate 1 ({candidate1_name}) answered:
+                    {answer1}
+                    
+                    Candidate 2 ({candidate2_name}) answered:
+                    {answer2}
+                    
+                    Judge both candidates fairly.
+                    
+                    Respond EXACTLY in this format:
+                    CANDIDATE1_SCORE: [number 1-100]
+                    CANDIDATE2_SCORE: [number 1-100]
+                    CANDIDATE1_STRENGTHS: [one sentence]
+                    CANDIDATE2_STRENGTHS: [one sentence]
+                    CANDIDATE1_WEAKNESSES: [one sentence]
+                    CANDIDATE2_WEAKNESSES: [one sentence]
+                    WINNER: [exactly "CANDIDATE1" or "CANDIDATE2" or "TIE"]
+                    WINNER_REASON: [one sentence explaining why]
+                    """
+                    
+                    response = client.models.generate_content(
+                        model="gemini-2.5-flash",
+                        contents=prompt
+                    )
+                    
+                    result = response.text
+                    
+                    # Parse results
+                    c1_score = 75
+                    c2_score = 75
+                    c1_strengths = ""
+                    c2_strengths = ""
+                    c1_weaknesses = ""
+                    c2_weaknesses = ""
+                    winner = "TIE"
+                    winner_reason = ""
+                    
+                    for line in result.split('\n'):
+                        if 'CANDIDATE1_SCORE:' in line:
+                            try:
+                                c1_score = float(line.replace('CANDIDATE1_SCORE:', '').strip())
+                            except:
+                                c1_score = 75
+                        if 'CANDIDATE2_SCORE:' in line:
+                            try:
+                                c2_score = float(line.replace('CANDIDATE2_SCORE:', '').strip())
+                            except:
+                                c2_score = 75
+                        if 'CANDIDATE1_STRENGTHS:' in line:
+                            c1_strengths = line.replace('CANDIDATE1_STRENGTHS:', '').strip()
+                        if 'CANDIDATE2_STRENGTHS:' in line:
+                            c2_strengths = line.replace('CANDIDATE2_STRENGTHS:', '').strip()
+                        if 'CANDIDATE1_WEAKNESSES:' in line:
+                            c1_weaknesses = line.replace('CANDIDATE1_WEAKNESSES:', '').strip()
+                        if 'CANDIDATE2_WEAKNESSES:' in line:
+                            c2_weaknesses = line.replace('CANDIDATE2_WEAKNESSES:', '').strip()
+                        if line.strip().startswith('WINNER:'):
+                            winner = line.replace('WINNER:', '').strip()
+                        if 'WINNER_REASON:' in line:
+                            winner_reason = line.replace('WINNER_REASON:', '').strip()
+                    
+                    # Show results
+                    st.markdown("---")
+                    st.markdown("## 🏆 COMPETITION RESULTS")
+                    
+                    # Score cards
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown(f"""
+                        <div class='score-card'>
+                            <h2>🔵</h2>
+                            <h3>{candidate1_name or 'Candidate 1'}</h3>
+                            <div class='big-score'>{c1_score}/100</div>
+                            <p>✅ {c1_strengths}</p>
+                            <p>⚠️ {c1_weaknesses}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown(f"""
+                        <div class='score-card'>
+                            <h2>🔴</h2>
+                            <h3>{candidate2_name or 'Candidate 2'}</h3>
+                            <div class='big-score'>{c2_score}/100</div>
+                            <p>✅ {c2_strengths}</p>
+                            <p>⚠️ {c2_weaknesses}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                    st.markdown("---")
+                    
+                    # Winner announcement
+                    if winner == "CANDIDATE1":
+                        winner_name = candidate1_name or "Candidate 1"
+                        winner_emoji = "🔵"
+                    elif winner == "CANDIDATE2":
+                        winner_name = candidate2_name or "Candidate 2"
+                        winner_emoji = "🔴"
+                    else:
+                        winner_name = "TIE"
+                        winner_emoji = "🤝"
+                    
+                    st.markdown(f"""
+                    <div class='header-banner'>
+                        <h1>{winner_emoji} WINNER: {winner_name}! 🏆</h1>
+                        <p>{winner_reason}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Score comparison chart
+                    import plotly.graph_objects as go
+                    
+                    fig = go.Figure(data=[
+                        go.Bar(
+                            name=candidate1_name or 'Candidate 1',
+                            x=['Score'],
+                            y=[c1_score],
+                            marker_color='#4444FF',
+                            text=[f'{c1_score}/100'],
+                            textposition='auto'
+                        ),
+                        go.Bar(
+                            name=candidate2_name or 'Candidate 2',
+                            x=['Score'],
+                            y=[c2_score],
+                            marker_color='#FF4444',
+                            text=[f'{c2_score}/100'],
+                            textposition='auto'
+                        )
+                    ])
+                    
+                    fig.update_layout(
+                        title="Competition Score Comparison",
+                        yaxis=dict(range=[0, 100]),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='white'),
+                        barmode='group'
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+            else:
+                st.error("⚠️ Both candidates must answer before judging!")
