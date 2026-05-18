@@ -1,7 +1,8 @@
 from google import genai
+from modules.config import GEMINI_API_KEY
 
 client = genai.Client(
-    api_key="AIzaSyDlMmHZCCuNls9WC71K6IJFsxixHBQ_jFg"
+    api_key=GEMINI_API_KEY
 )
 
 def analyze_cv(cv_text):

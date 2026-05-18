@@ -28,7 +28,14 @@ if 'current_user' not in st.session_state:
     st.session_state.current_user = None
 if 'show_signup' not in st.session_state:
     st.session_state.show_signup = False
-
+if 'language' not in st.session_state:
+    st.session_state.language = "🇬🇧 English"
+if 'competition_questions' not in st.session_state:
+    st.session_state.competition_questions = ""
+if 'lang_questions' not in st.session_state:
+    st.session_state.lang_questions = ""
+if 'lang_selected' not in st.session_state:
+    st.session_state.lang_selected = "English"
 
 # Page config
 st.set_page_config(
@@ -244,9 +251,17 @@ if st.session_state.logged_in:
     st.sidebar.markdown(f"📧 {st.session_state.current_user['email']}")
     st.sidebar.markdown("---")
     
+    # Language selector
+    language = st.sidebar.selectbox(
+        "🌍 Language",
+        ["🇬🇧 English", "🇸🇦 Arabic", "🇸🇴 Somali", "🇹🇷 Turkish"]
+    )
+    st.session_state.language = language
+    st.sidebar.markdown("---")
+    
     page = st.sidebar.radio(
     "Navigation",
-    ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History", "🏆 Competition", "💼 Job Matcher"]
+    ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History", "🏆 Competition", "💼 Job Matcher", "🌍 Languages"]
 )
     
     st.sidebar.markdown("---")
@@ -870,7 +885,8 @@ elif page == "🏆 Competition":
         if topic:
             with st.spinner("Generating competition questions..."):
                 from google import genai
-                client = genai.Client(api_key="AIzaSyDlMmHZCCuNls9WC71K6IJFsxixHBQ_jFg")
+                from modules.config import GEMINI_API_KEY
+                client = genai.Client(api_key=GEMINI_API_KEY)
                 
                 prompt = f"""
                 Generate 3 challenging interview questions about: {topic}
@@ -933,7 +949,8 @@ elif page == "🏆 Competition":
             if answer1 and answer2:
                 with st.spinner("AI is judging both candidates..."):
                     from google import genai
-                    client = genai.Client(api_key="AIzaSyDlMmHZCCuNls9WC71K6IJFsxixHBQ_jFg")
+                    from modules.config import GEMINI_API_KEY
+                    client = genai.Client(api_key=GEMINI_API_KEY)
                     
                     prompt = f"""
                     You are an expert interview judge.
@@ -1133,7 +1150,8 @@ elif page == "💼 Job Matcher":
         if st.button("🚀 Find My Job Matches!"):
             with st.spinner("AI is analyzing your CV and finding best matches..."):
                 from google import genai
-                client = genai.Client(api_key="AIzaSyDlMmHZCCuNls9WC71K6IJFsxixHBQ_jFg")
+                from modules.config import GEMINI_API_KEY
+                client = genai.Client(api_key=GEMINI_API_KEY)
                 
                 prompt = f"""
                 You are an expert career counselor and HR specialist.
@@ -1314,3 +1332,249 @@ elif page == "💼 Job Matcher":
                         <p>{improvement}</p>
                     </div>
                     """, unsafe_allow_html=True)
+                    # ============================================================
+# PAGE 8 — LANGUAGES
+# ============================================================
+elif page == "🌍 Languages":
+    st.title("🌍 Multi-Language Interview Practice")
+    st.markdown("---")
+    
+    st.markdown("""
+    <div class='header-banner'>
+        <h1>🌍 Practice Interviews in Any Language</h1>
+        <p>English, Arabic, Somali, Turkish — AI speaks your language!</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Language selection
+    st.markdown("### 🗣️ Step 1 — Choose Your Language")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown("""
+        <div class='score-card'>
+            <h2>🇬🇧</h2>
+            <h3>English</h3>
+            <p>International standard</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown("""
+        <div class='score-card'>
+            <h2>🇸🇦</h2>
+            <h3>Arabic</h3>
+            <p>العربية</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class='score-card'>
+            <h2>🇸🇴</h2>
+            <h3>Somali</h3>
+            <p>Af Soomaali</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown("""
+        <div class='score-card'>
+            <h2>🇹🇷</h2>
+            <h3>Turkish</h3>
+            <p>Türkçe</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Interview topic and language
+    st.markdown("### 🎯 Step 2 — Setup Your Interview")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        selected_language = st.selectbox(
+            "Interview Language",
+            ["English", "Arabic", "Somali", "Turkish"]
+        )
+    
+    with col2:
+        topic = st.text_input(
+            "Interview Topic",
+            placeholder="e.g. Python, Cloud Computing, AI..."
+        )
+    
+    if st.button("⚡ Generate Questions in Selected Language"):
+        if topic:
+            with st.spinner(f"Generating questions in {selected_language}..."):
+                from google import genai
+                from modules.config import GEMINI_API_KEY
+                client = genai.Client(api_key=GEMINI_API_KEY)
+                
+                prompt = f"""
+                Generate 5 professional interview questions about: {topic}
+                
+                IMPORTANT: Write ALL questions in {selected_language} language.
+                
+                If language is Arabic, write in Arabic script.
+                If language is Somali, write in Somali language.
+                If language is Turkish, write in Turkish language.
+                If language is English, write in English.
+                
+                Format:
+                Q1: [question in {selected_language}]
+                Q2: [question in {selected_language}]
+                Q3: [question in {selected_language}]
+                Q4: [question in {selected_language}]
+                Q5: [question in {selected_language}]
+                """
+                
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
+                
+                st.session_state.lang_questions = response.text
+                st.session_state.lang_selected = selected_language
+                st.success(f"✅ Questions generated in {selected_language}!")
+        else:
+            st.warning("⚠️ Please enter an interview topic!")
+    
+    # Show questions and answer
+    if 'lang_questions' in st.session_state and st.session_state.lang_questions:
+        st.markdown(f"### ❓ Interview Questions in {st.session_state.get('lang_selected', 'English')}")
+        st.info(st.session_state.lang_questions)
+        
+        st.markdown("---")
+        st.markdown("### 🎤 Step 3 — Answer the Questions")
+        
+        answer = st.text_area(
+            "Your Answer",
+            placeholder="Type your answer here in any language...",
+            height=200,
+            key="lang_answer"
+        )
+        
+        if st.button("🚀 Evaluate My Answer"):
+            if answer:
+                with st.spinner("AI is evaluating your answer..."):
+                    from google import genai
+                from modules.config import GEMINI_API_KEY
+                client = genai.Client(api_key=GEMINI_API_KEY)
+                
+                prompt = f"""
+                    You are an expert multilingual interview evaluator.
+                    
+                    The interview was conducted in {st.session_state.get('lang_selected', 'English')}.
+                    
+                    Questions asked:
+                    {st.session_state.lang_questions}
+                    
+                    Candidate answered:
+                    {answer}
+                    
+                    Evaluate the answer. Write your evaluation in {st.session_state.get('lang_selected', 'English')} language.
+                    
+                    Respond EXACTLY in this format:
+                    COMMUNICATION: [score 1-10]
+                    TECHNICAL: [score 1-10]
+                    CONFIDENCE: [score 1-10]
+                    OVERALL: [score 1-10]
+                    FEEDBACK: [2-3 sentences of feedback in {st.session_state.get('lang_selected', 'English')}]
+                    SUGGESTIONS: [3 improvement suggestions in {st.session_state.get('lang_selected', 'English')}]
+                    """
+                    
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
+                
+                result = response.text
+                    
+                    # Parse scores
+                comm = 7
+                tech = 7
+                conf = 7
+                overall = 7
+                feedback = ""
+                suggestions = ""
+                    
+                for line in result.split('\n'):
+                        if 'COMMUNICATION:' in line:
+                            try:
+                                comm = float(line.replace('COMMUNICATION:', '').strip())
+                            except:
+                                comm = 7
+                        if 'TECHNICAL:' in line:
+                            try:
+                                tech = float(line.replace('TECHNICAL:', '').strip())
+                            except:
+                                tech = 7
+                        if 'CONFIDENCE:' in line:
+                            try:
+                                conf = float(line.replace('CONFIDENCE:', '').strip())
+                            except:
+                                conf = 7
+                        if 'OVERALL:' in line:
+                            try:
+                                overall = float(line.replace('OVERALL:', '').strip())
+                            except:
+                                overall = 7
+                        if 'FEEDBACK:' in line:
+                            feedback = line.replace('FEEDBACK:', '').strip()
+                        if 'SUGGESTIONS:' in line:
+                            suggestions = line.replace('SUGGESTIONS:', '').strip()
+                    
+                    # Show results
+                st.markdown("---")
+                st.markdown("## 📊 Your Results")
+                    
+                col1, col2, col3, col4 = st.columns(4)
+                    
+                with col1:
+                        st.markdown(f"""
+                        <div class='score-card'>
+                            <p>Communication</p>
+                            <div class='big-score'>{comm}/10</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                with col2:
+                        st.markdown(f"""
+                        <div class='score-card'>
+                            <p>Technical</p>
+                            <div class='big-score'>{tech}/10</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                with col3:
+                        st.markdown(f"""
+                        <div class='score-card'>
+                            <p>Confidence</p>
+                            <div class='big-score'>{conf}/10</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                with col4:
+                        st.markdown(f"""
+                        <div class='score-card'>
+                            <p>Overall</p>
+                            <div class='big-score'>{overall}/10</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    
+                st.markdown("### 💡 AI Feedback")
+                st.markdown(f"""
+                    <div class='score-card'>
+                        <h3>📝 Feedback</h3>
+                        <p>{feedback}</p>
+                        <h3>📚 Suggestions</h3>
+                        <p>{suggestions}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.warning("⚠️ Please type your answer first!")
