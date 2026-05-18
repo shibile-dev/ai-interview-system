@@ -24,13 +24,16 @@ An intelligent interview simulation platform that uses Google Gemini AI to:
 
 | Feature | Description |
 |---------|-------------|
+| 🔐 Login/Signup | Secure user authentication with hashed passwords |
 | 📄 CV Analysis | Upload PDF CV and get instant AI analysis |
 | ❓ Question Generation | AI generates personalized interview questions |
 | 🎤 Answer Evaluation | Get scored on communication, technical and confidence |
 | 🎭 Emotion Detection | AI detects emotional state from your answers |
 | 📊 Analytics Dashboard | Beautiful charts and performance visualization |
 | 📋 Interview History | All sessions saved to database |
-
+| 🏆 Competition Mode | Two candidates battle — AI picks the winner |
+| 💼 Job Role Matcher | AI matches your CV to best job roles |
+| 🌍 Multi-Language | Practice interviews in English, Arabic, Somali, Turkish |
 ---
 
 ## 🛠️ Technology Stack
@@ -106,7 +109,7 @@ Dashboard + AI Report
 
 ## 👨‍💻 Developer
 
-**Mohamed Mohamud Shibile**
+**Mohamud Yusud Said**
 - GitHub: [@shibile-dev](https://github.com/shibile-dev)
 - Department: Software Engineering
 - University: OSTİM Technical University
