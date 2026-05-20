@@ -24,16 +24,18 @@ An intelligent interview simulation platform that uses Google Gemini AI to:
 
 | Feature | Description |
 |---------|-------------|
-| 🔐 Login/Signup | Secure user authentication with hashed passwords |
+| 🔐 Login/Signup | Secure authentication with hashed passwords |
 | 📄 CV Analysis | Upload PDF CV and get instant AI analysis |
 | ❓ Question Generation | AI generates personalized interview questions |
-| 🎤 Answer Evaluation | Get scored on communication, technical and confidence |
+| 🎤 Answer Evaluation | Scored on communication, technical and confidence |
 | 🎭 Emotion Detection | AI detects emotional state from your answers |
 | 📊 Analytics Dashboard | Beautiful charts and performance visualization |
 | 📋 Interview History | All sessions saved to database |
 | 🏆 Competition Mode | Two candidates battle — AI picks the winner |
 | 💼 Job Role Matcher | AI matches your CV to best job roles |
-| 🌍 Multi-Language | Practice interviews in English, Arabic, Somali, Turkish |
+| 🌍 Multi-Language | Practice in English, Arabic, Somali, Turkish |
+| 📄 PDF Report | Download full interview report as PDF |
+| 🐙 GitHub Analysis | AI analyzes your code and interviews you about it |
 ---
 
 ## 🛠️ Technology Stack

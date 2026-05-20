@@ -6,6 +6,7 @@ from modules.emotion_detector import detect_emotion
 from modules.evaluator import evaluate_answer
 from modules.database import init_db, save_interview, get_all_interviews, get_average_scores, register_user, login_user
 from modules.charts import create_score_radar_chart, create_emotion_pie_chart, create_score_bar_chart
+from modules.report_generator import generate_interview_report
 
 # Initialize database
 init_db()
@@ -36,6 +37,10 @@ if 'lang_questions' not in st.session_state:
     st.session_state.lang_questions = ""
 if 'lang_selected' not in st.session_state:
     st.session_state.lang_selected = "English"
+if 'github_repo' not in st.session_state:
+    st.session_state.github_repo = None
+if 'github_questions' not in st.session_state:
+    st.session_state.github_questions = ""
 
 # Page config
 st.set_page_config(
@@ -261,7 +266,7 @@ if st.session_state.logged_in:
     
     page = st.sidebar.radio(
     "Navigation",
-    ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History", "🏆 Competition", "💼 Job Matcher", "🌍 Languages"]
+    ["🏠 Home", "📄 CV Analysis", "🎤 Interview", "📊 Dashboard", "📋 History", "🏆 Competition", "💼 Job Matcher", "🌍 Languages", "🐙 GitHub Analysis"]
 )
     
     st.sidebar.markdown("---")
@@ -276,79 +281,147 @@ if st.session_state.logged_in:
         st.rerun()
 else:
     page = "🔐 Login"
-
-
 # ============================================================
 # PAGE 0 — LOGIN/SIGNUP
 # ============================================================
+
 if page == "🔐 Login":
+    
     st.markdown("""
-    <div class='header-banner'>
-        <h1>🤖 AI Interview & Communication Analysis Platform</h1>
-        <p>Powered by Google Gemini AI — Sign in to continue</p>
-    </div>
+    <style>
+    .login-card {
+        background: linear-gradient(145deg, #1a1535, #231d40);
+        border: 1px solid #FFB30044;
+        border-radius: 24px;
+        padding: 50px 40px;
+        text-align: center;
+        box-shadow: 0 0 60px rgba(255,179,0,0.1),
+                    0 0 120px rgba(155,89,182,0.08);
+        max-width: 480px;
+        margin: 0 auto;
+    }
+    .login-logo-circle {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #FFB300, #FF6B00);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px auto;
+        font-size: 36px;
+        box-shadow: 0 0 30px rgba(255,179,0,0.4);
+    }
+    .login-title {
+        color: white;
+        font-size: 26px;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    .login-sub {
+        color: #A89BC2;
+        font-size: 14px;
+        margin-bottom: 30px;
+    }
+    .divider-line {
+        display: flex;
+        align-items: center;
+        margin: 20px 0;
+        color: #A89BC2;
+        font-size: 13px;
+    }
+    .divider-line::before,
+    .divider-line::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #FFB30033;
+        margin: 0 10px;
+    }
+    .pill-row {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+    .pill-tag {
+        background: rgba(255,179,0,0.1);
+        border: 1px solid rgba(255,179,0,0.25);
+        border-radius: 20px;
+        padding: 4px 14px;
+        font-size: 12px;
+        color: #FFB300;
+    }
+    </style>
     """, unsafe_allow_html=True)
     
-    st.markdown("---")
-    
     if not st.session_state.show_signup:
-        # LOGIN FORM
-        st.markdown("### 🔐 Login to Your Account")
         
-        col1, col2, col3 = st.columns([1,2,1])
+        col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
             st.markdown("""
-            <div class='score-card'>
-                <h2>👤</h2>
-                <h3>Welcome Back!</h3>
+            <div class='login-card'>
+                <div class='login-logo-circle'>🤖</div>
+                <div class='login-title'>AI Interview System</div>
+                <div class='login-sub'>Powered by Google Gemini AI</div>
+                <div class='pill-row'>
+                    <span class='pill-tag'>🎯 CV Analysis</span>
+                    <span class='pill-tag'>🏆 Competition</span>
+                    <span class='pill-tag'>🌍 4 Languages</span>
+                    <span class='pill-tag'>💼 Job Matcher</span>
+                </div>
+                <div class='divider-line'>Sign in to continue</div>
             </div>
             """, unsafe_allow_html=True)
             
             st.markdown("")
+            
             email = st.text_input(
-                "📧 Email Address",
-                placeholder="Enter your email..."
+                "📧 Email",
+                placeholder="your@email.com"
             )
             password = st.text_input(
                 "🔑 Password",
                 type="password",
-                placeholder="Enter your password..."
+                placeholder="••••••••"
             )
             
             st.markdown("")
             
-            if st.button("🚀 Login"):
+            if st.button("🚀 Sign In"):
                 if email and password:
                     success, result = login_user(email, password)
                     if success:
                         st.session_state.logged_in = True
                         st.session_state.current_user = result
-                        st.success(f"✅ Welcome back {result['full_name']}!")
+                        st.success(f"✅ Welcome back, {result['full_name']}!")
                         st.rerun()
                     else:
                         st.error(f"❌ {result}")
                 else:
-                    st.warning("⚠️ Please enter email and password!")
+                    st.warning("⚠️ Please fill in all fields!")
             
-            st.markdown("")
-            st.markdown("Don't have an account?")
+            st.markdown("""
+            <div class='divider-line'>New here?</div>
+            """, unsafe_allow_html=True)
             
-            if st.button("📝 Create New Account"):
+            if st.button("✨ Create Free Account"):
                 st.session_state.show_signup = True
                 st.rerun()
     
     else:
-        # SIGNUP FORM
-        st.markdown("### 📝 Create New Account")
         
-        col1, col2, col3 = st.columns([1,2,1])
+        col1, col2, col3 = st.columns([1, 2, 1])
         
         with col2:
             st.markdown("""
-            <div class='score-card'>
-                <h2>🎉</h2>
-                <h3>Join Us Today!</h3>
+            <div class='login-card'>
+                <div class='login-logo-circle'>🌟</div>
+                <div class='login-title'>Create Account</div>
+                <div class='login-sub'>Join the future of interview preparation</div>
+                <div class='divider-line'>Fill in your details</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -356,26 +429,26 @@ if page == "🔐 Login":
             
             full_name = st.text_input(
                 "👤 Full Name",
-                placeholder="Enter your full name..."
+                placeholder="Mohamed Shibile"
             )
             email = st.text_input(
-                "📧 Email Address",
-                placeholder="Enter your email..."
+                "📧 Email",
+                placeholder="your@email.com"
             )
             password = st.text_input(
                 "🔑 Password",
                 type="password",
-                placeholder="Create a password..."
+                placeholder="Min 6 characters"
             )
             confirm_password = st.text_input(
                 "🔑 Confirm Password",
                 type="password",
-                placeholder="Confirm your password..."
+                placeholder="Repeat password"
             )
             
             st.markdown("")
             
-            if st.button("🎉 Create Account"):
+            if st.button("🎉 Create My Account"):
                 if full_name and email and password and confirm_password:
                     if password == confirm_password:
                         if len(password) >= 6:
@@ -383,20 +456,21 @@ if page == "🔐 Login":
                                 full_name, email, password
                             )
                             if success:
-                                st.success(f"✅ {message} Please login!")
+                                st.success("✅ Account created! Please login!")
                                 st.session_state.show_signup = False
                                 st.rerun()
                             else:
                                 st.error(f"❌ {message}")
                         else:
-                            st.warning("⚠️ Password must be at least 6 characters!")
+                            st.warning("⚠️ Password must be 6+ characters!")
                     else:
                         st.error("❌ Passwords don't match!")
                 else:
                     st.warning("⚠️ Please fill in all fields!")
             
-            st.markdown("")
-            st.markdown("Already have an account?")
+            st.markdown("""
+            <div class='divider-line'>Already have an account?</div>
+            """, unsafe_allow_html=True)
             
             if st.button("🔐 Back to Login"):
                 st.session_state.show_signup = False
@@ -431,7 +505,7 @@ if page == "🏠 Home":
         st.markdown("""
         <div class='score-card'>
             <h2>⚡</h2>
-            <div class='big-score'>5</div>
+            <div class='big-score'>8</div>
             <p>Core Features</p>
         </div>
         """, unsafe_allow_html=True)
@@ -439,16 +513,16 @@ if page == "🏠 Home":
     with col3:
         st.markdown("""
         <div class='score-card'>
-            <h2>📊</h2>
+            <h2>🌍</h2>
             <div class='big-score'>4</div>
-            <p>Score Metrics</p>
+            <p>Languages</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col4:
         st.markdown("""
         <div class='score-card'>
-            <h2>🎯</h2>
+            <h2>🏆</h2>
             <div class='big-score'>∞</div>
             <p>Practice Sessions</p>
         </div>
@@ -720,6 +794,29 @@ elif page == "🎤 Interview":
                     
                     st.markdown("### 💡 AI Feedback")
                     st.write(evaluation)
+                    
+                    # PDF Report Download
+                    st.markdown("### 📄 Download Your Report")
+                    
+                    pdf_buffer = generate_interview_report(
+                        candidate_name=st.session_state.current_user['full_name'],
+                        question=question,
+                        answer=answer,
+                        communication_score=comm,
+                        technical_score=tech,
+                        confidence_score=conf,
+                        overall_score=overall,
+                        emotion=st.session_state.emotions[-1] if st.session_state.emotions else "Neutral",
+                        evaluation_text=evaluation
+                    )
+                    
+                    st.download_button(
+                        label="📥 Download PDF Report",
+                        data=pdf_buffer,
+                        file_name=f"interview_report_{st.session_state.current_user['full_name'].replace(' ', '_')}.pdf",
+                        mime="application/pdf"
+                    )
+                    
                     st.info("👈 Go to Dashboard to see your charts!")
                 else:
                     st.error("Please enter both a question and your answer!")
@@ -1578,3 +1675,363 @@ elif page == "🌍 Languages":
                     """, unsafe_allow_html=True)
             else:
                 st.warning("⚠️ Please type your answer first!")
+                # ============================================================
+# PAGE 9 — GITHUB ANALYSIS
+# ============================================================
+elif page == "🐙 GitHub Analysis":
+    st.title("🐙 GitHub Repository Analysis")
+    st.markdown("---")
+    
+    st.markdown("""
+    <div class='header-banner'>
+        <h1>🐙 AI Code Interview Generator</h1>
+        <p>Enter your GitHub repo URL — AI analyzes your code and interviews you about it!</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    st.markdown("### 🔗 Step 1 — Enter Your GitHub Repository URL")
+    
+    github_url = st.text_input(
+        "GitHub Repository URL",
+        placeholder="https://github.com/username/repository"
+    )
+    
+    if st.button("🔍 Analyze Repository"):
+        if github_url:
+            with st.spinner("Fetching and analyzing your repository..."):
+                try:
+                    import requests
+                    
+                    # Parse GitHub URL
+                    parts = github_url.replace("https://github.com/", "").strip("/").split("/")
+                    
+                    if len(parts) >= 2:
+                        owner = parts[0]
+                        repo = parts[1]
+                        
+                        # Fetch repo info
+                        api_url = f"https://api.github.com/repos/{owner}/{repo}"
+                        repo_response = requests.get(api_url)
+                        repo_data = repo_response.json()
+                        
+                        # Fetch README
+                        readme_url = f"https://api.github.com/repos/{owner}/{repo}/readme"
+                        readme_response = requests.get(readme_url)
+                        
+                        readme_content = ""
+                        if readme_response.status_code == 200:
+                            import base64
+                            readme_data = readme_response.json()
+                            readme_content = base64.b64decode(
+                                readme_data['content']
+                            ).decode('utf-8')[:3000]
+                        
+                        # Fetch file tree
+                        tree_url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/HEAD?recursive=1"
+                        tree_response = requests.get(tree_url)
+                        
+                        file_list = []
+                        if tree_response.status_code == 200:
+                            tree_data = tree_response.json()
+                            if 'tree' in tree_data:
+                                file_list = [
+                                    f['path'] for f in tree_data['tree']
+                                    if f['type'] == 'blob'
+                                    and not f['path'].startswith('.')
+                                ][:50]
+                        
+                        # Store repo info
+                        st.session_state.github_repo = {
+                            'name': repo_data.get('name', repo),
+                            'description': repo_data.get('description', 'No description'),
+                            'language': repo_data.get('language', 'Unknown'),
+                            'stars': repo_data.get('stargazers_count', 0),
+                            'forks': repo_data.get('forks_count', 0),
+                            'owner': owner,
+                            'readme': readme_content,
+                            'files': file_list,
+                            'url': github_url
+                        }
+                        
+                        st.success("✅ Repository analyzed successfully!")
+                    else:
+                        st.error("❌ Invalid GitHub URL format!")
+                        
+                except Exception as e:
+                    st.error(f"❌ Error fetching repository: {str(e)}")
+        else:
+            st.warning("⚠️ Please enter a GitHub URL!")
+    
+    # Show repo info and generate questions
+    if 'github_repo' in st.session_state and st.session_state.github_repo:
+        repo = st.session_state.github_repo
+        
+        st.markdown("---")
+        st.markdown("### 📊 Repository Overview")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.markdown(f"""
+            <div class='score-card'>
+                <h2>📁</h2>
+                <h3>{repo['name']}</h3>
+                <p>Repository Name</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            st.markdown(f"""
+            <div class='score-card'>
+                <h2>💻</h2>
+                <h3>{repo['language']}</h3>
+                <p>Main Language</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col3:
+            st.markdown(f"""
+            <div class='score-card'>
+                <h2>⭐</h2>
+                <h3>{repo['stars']}</h3>
+                <p>Stars</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            st.markdown(f"""
+            <div class='score-card'>
+                <h2>🍴</h2>
+                <h3>{repo['forks']}</h3>
+                <p>Forks</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown(f"**Description:** {repo['description']}")
+        
+        if repo['files']:
+            with st.expander("📂 View Project Files"):
+                for f in repo['files'][:30]:
+                    st.markdown(f"📄 `{f}`")
+        
+        st.markdown("---")
+        st.markdown("### 🤖 Step 2 — Generate Interview Questions")
+        
+        interview_type = st.selectbox(
+            "Interview Type",
+            [
+                "General Code Review",
+                "Architecture & Design",
+                "Technical Deep Dive",
+                "Problem Solving",
+                "Best Practices & Security"
+            ]
+        )
+        
+        if st.button("⚡ Generate Questions From My Code!"):
+            with st.spinner("AI is reading your code and generating questions..."):
+                from google import genai
+                from modules.config import GEMINI_API_KEY
+                client = genai.Client(api_key=GEMINI_API_KEY)
+                
+                files_str = "\n".join(repo['files'][:30])
+                
+                prompt = f"""
+                You are an expert technical interviewer.
+                
+                Analyze this GitHub repository and generate interview questions.
+                
+                Repository: {repo['name']}
+                Language: {repo['language']}
+                Description: {repo['description']}
+                
+                Project Files:
+                {files_str}
+                
+                README Content:
+                {repo['readme'][:2000]}
+                
+                Interview Type: {interview_type}
+                
+                Generate 5 specific technical questions about THIS project.
+                Make questions specific to the actual files and technology used.
+                
+                Format EXACTLY:
+                Q1: [specific question about their code]
+                Q2: [specific question about their architecture]
+                Q3: [specific question about their technology choices]
+                Q4: [specific question about challenges they faced]
+                Q5: [specific question about improvements]
+                
+                SUMMARY: [2 sentences about what this project demonstrates]
+                """
+                
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
+                
+                st.session_state.github_questions = response.text
+                st.success("✅ Questions generated from your code!")
+        
+        # Show questions and answer
+        if 'github_questions' in st.session_state and st.session_state.github_questions:
+            st.markdown("### ❓ Your Code Interview Questions")
+            st.info(st.session_state.github_questions)
+            
+            st.markdown("---")
+            st.markdown("### 🎤 Step 3 — Answer the Questions")
+            
+            github_answer = st.text_area(
+                "Your Answer",
+                placeholder="Explain your code, architecture decisions, challenges...",
+                height=200,
+                key="github_answer"
+            )
+            
+            if st.button("🚀 Evaluate My Answer"):
+                if github_answer:
+                    with st.spinner("AI is evaluating your answer..."):
+                        from google import genai
+                        from modules.config import GEMINI_API_KEY
+                        client = genai.Client(api_key=GEMINI_API_KEY)
+                        
+                        prompt = f"""
+                        You are an expert code reviewer and technical interviewer.
+                        
+                        The candidate is being interviewed about their GitHub project:
+                        Repository: {repo['name']}
+                        Language: {repo['language']}
+                        
+                        Questions asked:
+                        {st.session_state.github_questions}
+                        
+                        Candidate answered:
+                        {github_answer}
+                        
+                        Evaluate their answer professionally.
+                        
+                        Respond EXACTLY:
+                        COMMUNICATION: [1-10]
+                        TECHNICAL: [1-10]
+                        CODE_KNOWLEDGE: [1-10]
+                        OVERALL: [1-10]
+                        STRENGTHS: [what they explained well]
+                        IMPROVEMENTS: [what they should explain better]
+                        VERDICT: [one sentence overall verdict]
+                        """
+                        
+                        response = client.models.generate_content(
+                            model="gemini-2.5-flash",
+                            contents=prompt
+                        )
+                        
+                        result = response.text
+                        
+                        # Parse scores
+                        comm = 7
+                        tech = 7
+                        code = 7
+                        overall = 7
+                        strengths = ""
+                        improvements = ""
+                        verdict = ""
+                        
+                        for line in result.split('\n'):
+                            if 'COMMUNICATION:' in line:
+                                try:
+                                    comm = float(line.replace('COMMUNICATION:', '').strip())
+                                except:
+                                    comm = 7
+                            if 'TECHNICAL:' in line:
+                                try:
+                                    tech = float(line.replace('TECHNICAL:', '').strip())
+                                except:
+                                    tech = 7
+                            if 'CODE_KNOWLEDGE:' in line:
+                                try:
+                                    code = float(line.replace('CODE_KNOWLEDGE:', '').strip())
+                                except:
+                                    code = 7
+                            if 'OVERALL:' in line:
+                                try:
+                                    overall = float(line.replace('OVERALL:', '').strip())
+                                except:
+                                    overall = 7
+                            if 'STRENGTHS:' in line:
+                                strengths = line.replace('STRENGTHS:', '').strip()
+                            if 'IMPROVEMENTS:' in line:
+                                improvements = line.replace('IMPROVEMENTS:', '').strip()
+                            if 'VERDICT:' in line:
+                                verdict = line.replace('VERDICT:', '').strip()
+                        
+                        # Show results
+                        st.markdown("---")
+                        st.markdown("## 📊 Your Results")
+                        
+                        col1, col2, col3, col4 = st.columns(4)
+                        
+                        with col1:
+                            st.markdown(f"""
+                            <div class='score-card'>
+                                <p>Communication</p>
+                                <div class='big-score'>{comm}/10</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col2:
+                            st.markdown(f"""
+                            <div class='score-card'>
+                                <p>Technical</p>
+                                <div class='big-score'>{tech}/10</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col3:
+                            st.markdown(f"""
+                            <div class='score-card'>
+                                <p>Code Knowledge</p>
+                                <div class='big-score'>{code}/10</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col4:
+                            st.markdown(f"""
+                            <div class='score-card'>
+                                <p>Overall</p>
+                                <div class='big-score'>{overall}/10</div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        st.markdown("---")
+                        
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.markdown(f"""
+                            <div class='score-card'>
+                                <h2>💪</h2>
+                                <h3>Strengths</h3>
+                                <p>{strengths}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        with col2:
+                            st.markdown(f"""
+                            <div class='score-card'>
+                                <h2>📚</h2>
+                                <h3>Improve</h3>
+                                <p>{improvements}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                        st.markdown(f"""
+                        <div class='header-banner'>
+                            <h1>🎯 Verdict</h1>
+                            <p>{verdict}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.warning("⚠️ Please type your answer first!")
